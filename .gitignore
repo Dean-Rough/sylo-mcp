@@ -70,3 +70,4 @@ temp/
 /asana-projects.ts
 /asana-tasks.ts  
 /gmail-messages.ts
+.vercel
