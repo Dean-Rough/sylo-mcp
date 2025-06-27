@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output
+*.tsbuildinfo
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Logs
+logs
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# Temporary folders
+tmp/
+temp/
+
+# Build artifacts
+*.tgz
+*.tar.gz
+
+# Prisma
+.env.example.local
+
+# Nango cache
+.nango/cache/
+
+# Development PDFs and screenshots  
+*.pdf
+*.png
+
+# Code workspace files
+*.code-workspace
+
+# Test files at root (keep proper test directories)
+/asana-projects.ts
+/asana-tasks.ts  
+/gmail-messages.ts

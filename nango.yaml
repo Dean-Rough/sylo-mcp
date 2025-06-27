@@ -1,0 +1,169 @@
+integrations:
+  gmail:
+    syncs:
+      gmail-messages:
+        description: |
+          Fetches Gmail messages with support for filters and labels.
+          Includes full email content, attachments metadata, and threading information.
+        endpoint: GET /sylo/gmail/messages
+        sync_type: incremental
+        track_deletes: true
+        runs: every 5 minutes
+        auto_start: true
+        output: GmailMessage
+
+  asana:
+    syncs:
+      asana-tasks:
+        description: |
+          Fetches tasks from Asana workspaces and projects.
+          Includes task details, assignees, due dates, and custom fields.
+        endpoint: GET /sylo/asana/tasks
+        sync_type: incremental
+        track_deletes: true
+        runs: every 10 minutes
+        auto_start: true
+        output: AsanaTask
+      asana-projects:
+        description: |
+          Fetches all projects from accessible Asana workspaces.
+        endpoint: GET /sylo/asana/projects
+        sync_type: full
+        track_deletes: false
+        runs: every hour
+        auto_start: true
+        output: AsanaProject
+
+  xero:
+    syncs:
+      xero-invoices:
+        description: |
+          Fetches invoices from Xero accounting system.
+          Includes invoice details, line items, and payment status.
+        endpoint: GET /sylo/xero/invoices
+        sync_type: incremental
+        track_deletes: true
+        runs: every 30 minutes
+        auto_start: true
+        output: XeroInvoice
+      xero-contacts:
+        description: |
+          Fetches contacts from Xero.
+        endpoint: GET /sylo/xero/contacts
+        sync_type: full
+        track_deletes: false
+        runs: every 2 hours
+        auto_start: true
+        output: XeroContact
+
+models:
+  GmailMessage:
+    id: string
+    threadId: string
+    labelIds: string[]
+    snippet: string
+    historyId: string
+    internalDate: date
+    payload: 
+      headers: GmailHeader[]
+      body: GmailBody
+      parts: GmailPart[]
+    sizeEstimate: number
+    raw: string?
+
+  GmailHeader:
+    name: string
+    value: string
+
+  GmailBody:
+    size: number
+    data: string?
+
+  GmailPart:
+    partId: string
+    mimeType: string
+    filename: string?
+    headers: GmailHeader[]
+    body: GmailBody
+
+  AsanaTask:
+    id: string
+    gid: string
+    name: string
+    notes: string?
+    completed: boolean
+    completed_at: date?
+    created_at: date
+    modified_at: date
+    due_on: date?
+    due_at: date?
+    assignee:
+      gid: string
+      name: string
+    projects:
+      - gid: string
+        name: string
+    workspace:
+      gid: string
+      name: string
+    custom_fields: object[]
+
+  AsanaProject:
+    id: string
+    gid: string
+    name: string
+    notes: string?
+    created_at: date
+    modified_at: date
+    workspace:
+      gid: string
+      name: string
+    team:
+      gid: string?
+      name: string?
+    archived: boolean
+    color: string?
+
+  XeroInvoice:
+    id: string
+    invoiceID: string
+    invoiceNumber: string
+    type: string
+    status: string
+    lineAmountTypes: string
+    date: date
+    dueDate: date?
+    total: number
+    totalTax: number
+    amountDue: number
+    amountPaid: number
+    updatedDateUTC: date
+    currencyCode: string
+    contact:
+      contactID: string
+      name: string
+    lineItems: XeroLineItem[]
+
+  XeroLineItem:
+    lineItemID: string
+    description: string
+    quantity: number
+    unitAmount: number
+    taxType: string?
+    taxAmount: number
+    lineAmount: number
+    accountCode: string?
+
+  XeroContact:
+    id: string
+    contactID: string
+    contactStatus: string
+    name: string
+    firstName: string?
+    lastName: string?
+    emailAddress: string?
+    addresses: object[]
+    phones: object[]
+    updatedDateUTC: date
+    isSupplier: boolean
+    isCustomer: boolean
