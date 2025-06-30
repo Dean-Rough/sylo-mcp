@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { currentUser } from '@clerk/nextjs/server'
-import { getConnection } from '@/lib/nango/client'
+import { getConnection, INTEGRATION_CONFIGS } from '@/lib/nango/client'
 import { prisma } from '@/lib/prisma'
+import { validateHMACSignature } from '@/lib/security/hmac'
 
 export async function GET(request: NextRequest, { params }: { params: { service: string } }) {
   try {
@@ -22,6 +23,19 @@ export async function GET(request: NextRequest, { params }: { params: { service:
       return NextResponse.redirect(`/dashboard?error=oauth_failed&service=${service}`)
     }
 
+    // Extract connection metadata
+    const connectionMetadata = {
+      provider: connection.provider_config_key,
+      providerId: connection.provider,
+      createdAt: connection.created_at,
+      updatedAt: connection.updated_at,
+      lastFetchedAt: connection.last_fetched_at,
+      ...(connection.metadata && { metadata: connection.metadata }),
+    }
+
+    // Get the expected scopes for this service from our config
+    const expectedScopes = (INTEGRATION_CONFIGS as any)[service]?.scopes || []
+
     // Store connection info in database
     await prisma.oAuthConnection.upsert({
       where: {
@@ -34,14 +48,32 @@ export async function GET(request: NextRequest, { params }: { params: { service:
         isActive: true,
         lastUsed: new Date(),
         updatedAt: new Date(),
+        providerData: connectionMetadata as any,
       },
       create: {
         userId: user.id,
         service: service,
         connectionId: connectionId, // Nango connection ID
         isActive: true,
-        scopes: [], // Will be populated from Nango metadata
-        providerData: {},
+        scopes: expectedScopes, // Store expected scopes since Nango handles actual OAuth scopes internally
+        providerData: connectionMetadata as any,
+      },
+    })
+
+    // Log successful connection for audit trail
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        service: service,
+        action: 'oauth_connection_established',
+        status: 'success',
+        parameters: {
+          connectionId: connectionId,
+          service: service,
+        },
+        result: {
+          scopes: expectedScopes,
+        },
       },
     })
 
@@ -56,14 +88,17 @@ export async function GET(request: NextRequest, { params }: { params: { service:
 // Handle Nango webhooks for connection updates
 export async function POST(request: NextRequest, { params }: { params: { service: string } }) {
   try {
-    const body = await request.json()
+    const rawBody = await request.text()
+    const body = JSON.parse(rawBody)
     const { type, connectionId, providerConfigKey } = body
 
-    // Verify webhook signature (implement based on Nango docs)
-    // const signature = request.headers.get('x-nango-signature')
-    // if (!verifyNangoSignature(body, signature)) {
-    //   return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-    // }
+    // Verify webhook signature for production environments
+    if (process.env.NODE_ENV === 'production' && process.env.NANGO_WEBHOOK_SECRET) {
+      const signature = request.headers.get('x-nango-signature')
+      if (!signature || !validateHMACSignature(rawBody, signature, process.env.NANGO_WEBHOOK_SECRET)) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      }
+    }
 
     switch (type) {
       case 'auth':
@@ -91,7 +126,7 @@ export async function POST(request: NextRequest, { params }: { params: { service
 
 async function handleConnectionEstablished(connectionId: string, service: string) {
   // Update database to mark connection as active
-  await prisma.oAuthConnection.updateMany({
+  const result = await prisma.oAuthConnection.updateMany({
     where: {
       userId: connectionId,
       service,
@@ -101,11 +136,27 @@ async function handleConnectionEstablished(connectionId: string, service: string
       updatedAt: new Date(),
     },
   })
+
+  // Audit log the connection establishment
+  if (result.count > 0) {
+    await prisma.auditLog.create({
+      data: {
+        userId: connectionId,
+        service: service,
+        action: 'oauth_connection_webhook_established',
+        status: 'success',
+        parameters: {
+          connectionId,
+          service,
+        },
+      },
+    })
+  }
 }
 
 async function handleTokenRefresh(connectionId: string, service: string) {
   // Update last refresh timestamp
-  await prisma.oAuthConnection.updateMany({
+  const result = await prisma.oAuthConnection.updateMany({
     where: {
       userId: connectionId,
       service,
@@ -114,11 +165,27 @@ async function handleTokenRefresh(connectionId: string, service: string) {
       updatedAt: new Date(),
     },
   })
+
+  // Audit log the token refresh
+  if (result.count > 0) {
+    await prisma.auditLog.create({
+      data: {
+        userId: connectionId,
+        service: service,
+        action: 'oauth_token_refreshed',
+        status: 'success',
+        parameters: {
+          connectionId,
+          service,
+        },
+      },
+    })
+  }
 }
 
 async function handleConnectionDeleted(connectionId: string, service: string) {
   // Mark connection as inactive
-  await prisma.oAuthConnection.updateMany({
+  const result = await prisma.oAuthConnection.updateMany({
     where: {
       userId: connectionId,
       service,
@@ -128,4 +195,20 @@ async function handleConnectionDeleted(connectionId: string, service: string) {
       updatedAt: new Date(),
     },
   })
+
+  // Audit log the connection deletion
+  if (result.count > 0) {
+    await prisma.auditLog.create({
+      data: {
+        userId: connectionId,
+        service: service,
+        action: 'oauth_connection_deleted',
+        status: 'success',
+        parameters: {
+          connectionId,
+          service,
+        },
+      },
+    })
+  }
 }

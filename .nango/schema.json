@@ -1,0 +1,537 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "GmailHeader": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "GmailBody": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "number"
+        },
+        "data": {
+          "type": "string",
+          "const": "string?"
+        }
+      },
+      "required": [
+        "size",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "GmailPart": {
+      "type": "object",
+      "properties": {
+        "partId": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string",
+          "const": "string?"
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GmailHeader"
+          }
+        },
+        "body": {
+          "$ref": "#/definitions/GmailBody"
+        }
+      },
+      "required": [
+        "partId",
+        "mimeType",
+        "filename",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "GmailMessage": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "threadId": {
+          "type": "string"
+        },
+        "labelIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "snippet": {
+          "type": "string"
+        },
+        "historyId": {
+          "type": "string"
+        },
+        "internalDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "headers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GmailHeader"
+              }
+            },
+            "body": {
+              "$ref": "#/definitions/GmailBody"
+            },
+            "parts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GmailPart"
+              }
+            }
+          },
+          "required": [
+            "headers",
+            "body",
+            "parts"
+          ],
+          "additionalProperties": false
+        },
+        "sizeEstimate": {
+          "type": "number"
+        },
+        "raw": {
+          "type": "string",
+          "const": "string?"
+        }
+      },
+      "required": [
+        "id",
+        "threadId",
+        "labelIds",
+        "snippet",
+        "historyId",
+        "internalDate",
+        "payload",
+        "sizeEstimate",
+        "raw"
+      ],
+      "additionalProperties": false
+    },
+    "AsanaTask": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "gid": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string",
+          "const": "string?"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "completed_at": {
+          "type": "string",
+          "const": "date?"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "modified_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "due_on": {
+          "type": "string",
+          "const": "date?"
+        },
+        "due_at": {
+          "type": "string",
+          "const": "date?"
+        },
+        "assignee": {
+          "type": "object",
+          "properties": {
+            "gid": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "gid",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "gid": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "gid",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "workspace": {
+          "type": "object",
+          "properties": {
+            "gid": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "gid",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "custom_fields": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "gid",
+        "name",
+        "notes",
+        "completed",
+        "completed_at",
+        "created_at",
+        "modified_at",
+        "due_on",
+        "due_at",
+        "assignee",
+        "projects",
+        "workspace",
+        "custom_fields"
+      ],
+      "additionalProperties": false
+    },
+    "AsanaProject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "gid": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string",
+          "const": "string?"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "modified_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "workspace": {
+          "type": "object",
+          "properties": {
+            "gid": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "gid",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "team": {
+          "type": "object",
+          "properties": {
+            "gid": {
+              "type": "string",
+              "const": "string?"
+            },
+            "name": {
+              "type": "string",
+              "const": "string?"
+            }
+          },
+          "required": [
+            "gid",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "color": {
+          "type": "string",
+          "const": "string?"
+        }
+      },
+      "required": [
+        "id",
+        "gid",
+        "name",
+        "notes",
+        "created_at",
+        "modified_at",
+        "workspace",
+        "team",
+        "archived",
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "XeroLineItem": {
+      "type": "object",
+      "properties": {
+        "lineItemID": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "unitAmount": {
+          "type": "number"
+        },
+        "taxType": {
+          "type": "string",
+          "const": "string?"
+        },
+        "taxAmount": {
+          "type": "number"
+        },
+        "lineAmount": {
+          "type": "number"
+        },
+        "accountCode": {
+          "type": "string",
+          "const": "string?"
+        }
+      },
+      "required": [
+        "lineItemID",
+        "description",
+        "quantity",
+        "unitAmount",
+        "taxType",
+        "taxAmount",
+        "lineAmount",
+        "accountCode"
+      ],
+      "additionalProperties": false
+    },
+    "XeroInvoice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "invoiceID": {
+          "type": "string"
+        },
+        "invoiceNumber": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "lineAmountTypes": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dueDate": {
+          "type": "string",
+          "const": "date?"
+        },
+        "total": {
+          "type": "number"
+        },
+        "totalTax": {
+          "type": "number"
+        },
+        "amountDue": {
+          "type": "number"
+        },
+        "amountPaid": {
+          "type": "number"
+        },
+        "updatedDateUTC": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "currencyCode": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "contactID": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "contactID",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "lineItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/XeroLineItem"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "invoiceID",
+        "invoiceNumber",
+        "type",
+        "status",
+        "lineAmountTypes",
+        "date",
+        "dueDate",
+        "total",
+        "totalTax",
+        "amountDue",
+        "amountPaid",
+        "updatedDateUTC",
+        "currencyCode",
+        "contact",
+        "lineItems"
+      ],
+      "additionalProperties": false
+    },
+    "XeroContact": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "contactID": {
+          "type": "string"
+        },
+        "contactStatus": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string",
+          "const": "string?"
+        },
+        "lastName": {
+          "type": "string",
+          "const": "string?"
+        },
+        "emailAddress": {
+          "type": "string",
+          "const": "string?"
+        },
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "phones": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "updatedDateUTC": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "isSupplier": {
+          "type": "boolean"
+        },
+        "isCustomer": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "contactID",
+        "contactStatus",
+        "name",
+        "firstName",
+        "lastName",
+        "emailAddress",
+        "addresses",
+        "phones",
+        "updatedDateUTC",
+        "isSupplier",
+        "isCustomer"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$comment": "This file was generated by Nango (v0.61.3)"
+}

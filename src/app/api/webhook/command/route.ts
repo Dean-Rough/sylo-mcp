@@ -7,8 +7,9 @@ import { GmailService } from '@/lib/services/gmail'
 import { AsanaService } from '@/lib/services/asana'
 import { XeroService } from '@/lib/services/xero'
 import { makeAPICall } from '@/lib/nango/client'
+import { withRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/middleware/rate-limit'
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   const signature = request.headers.get('x-sylo-signature')
   const timestamp = request.headers.get('x-sylo-timestamp')
 
@@ -37,14 +38,6 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Invalid command structure' }, { status: 400 })
     }
 
-    // Rate limiting check
-    const rateLimitKey = `rate_limit:${command.userId}:webhook`
-    const requestCount = await checkRateLimit(rateLimitKey)
-
-    if (requestCount > 50) {
-      // 50 requests per hour
-      return Response.json({ error: 'Rate limit exceeded' }, { status: 429 })
-    }
 
     // Generate unique command ID
     const commandId = crypto.randomUUID()
@@ -270,21 +263,13 @@ async function executeXeroCommand(command: AgentCommand): Promise<CommandResult>
   }
 }
 
-// Simple in-memory rate limiting (in production, use Redis)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
-
-async function checkRateLimit(key: string): Promise<number> {
-  const now = Date.now()
-  const windowMs = 60 * 60 * 1000 // 1 hour
-
-  const current = rateLimitStore.get(key)
-
-  if (!current || now > current.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs })
-    return 1
-  }
-
-  current.count++
-  rateLimitStore.set(key, current)
-  return current.count
-}
+// Export the POST handler with rate limiting
+export const POST = withRateLimit(postHandler, {
+  requests: RATE_LIMIT_CONFIGS.api.webhook.requests,
+  window: RATE_LIMIT_CONFIGS.api.webhook.window,
+  identifier: (req) => {
+    // Try to extract user ID from the request body
+    // This is a bit hacky but necessary for webhook rate limiting
+    return req.headers.get('x-user-id') || req.headers.get('x-forwarded-for') || 'unknown'
+  },
+})
